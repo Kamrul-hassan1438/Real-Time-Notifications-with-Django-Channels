@@ -1,6 +1,8 @@
 from django.contrib import admin
-# 👇 1. Add this line import notification model
 from .models import Notification
 
-# 👇 2. Add this line to add the notification
-admin.site.register(Notification)
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ('sender', 'receiver', 'message', 'created_at')
+    list_filter = ('sender', 'receiver', 'created_at')
+    search_fields = ('message', 'sender__username', 'receiver__username')

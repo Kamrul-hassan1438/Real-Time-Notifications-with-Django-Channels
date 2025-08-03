@@ -1,11 +1,10 @@
 {% extends 'base.html' %}
-{% block title %} Home {% endblock %}
+{% block title %}Home{% endblock %}
 {% block css_style %}
 <style>
     .fa-solid {
         font-size: 26px;
     }
-
     .fa-solid[data-count]:after {
         position: absolute;
         right: 0%;
@@ -22,66 +21,74 @@
         font-weight: bold;
     }
 </style>
-
 {% endblock %}
 {% block content %}
 <div class="container mt-5">
     <h1 class="text-center">Welcome to Notify</h1>
+    {% if user.is_authenticated %}
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <h3>Send Notification</h3>
+            <form method="POST" action="{% url 'send_notification' %}">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="receiver" class="form-label">Select Recipient</label>
+                    <select class="form-select" id="receiver" name="receiver" required>
+                        <option value="" disabled selected>Select a user</option>
+                        {% for u in users %}
+                        <option value="{{ u.id }}">{{ u.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="message" class="form-label">Message</label>
+                    <textarea class="form-control" id="message" name="message" rows="4" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Send</button>
+            </form>
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center">
+        <p>Please <a href="{% url 'login' %}">login</a> to send and receive notifications.</p>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
-
 {% block js_script %}
+{% if user.is_authenticated %}
 <script>
-    // setup chat scoket
-    const notifyScoket = new WebSocket(
-        'ws://'
-        + window.location.host
-        + '/ws/notify/'
+    const notifySocket = new WebSocket(
+        'ws://' + window.location.host + '/ws/notify/'
     );
 
-    // on socket open
-    notifyScoket.onopen = function (e) {
+    notifySocket.onopen = function(e) {
         console.log('Socket successfully connected.');
     };
 
-    // on socket close
-    notifyScoket.onclose = function (e) {
+    notifySocket.onclose = function(e) {
         console.log('Socket closed unexpectedly');
     };
 
-    // on receiving message on group
-    notifyScoket.onmessage = function (e) {
+    notifySocket.onmessage = function(e) {
         const data = JSON.parse(e.data);
         const message = data.message;
-        // Call the setMessage function to add the new li element
-        setMessage(message);
-
+        const sender = data.sender;
+        setMessage(`${sender}: ${message}`);
     };
 
-    function setMessage(message) {
-        // Create a new li element
+    function setMessage(text) {
         var newLi = document.createElement('li');
-
-        // Create a new anchor element
         var newAnchor = document.createElement('a');
         newAnchor.className = 'dropdown-item text-wrap';
         newAnchor.href = '#';
-        newAnchor.textContent = message;
-
-        // Append the anchor element to the li element
+        newAnchor.textContent = text;
         newLi.appendChild(newAnchor);
-
-        // Get the ul element with the id "notify"
         var ulElement = document.getElementById('notify');
-
-        // Append the new li element to the ul element
         ulElement.appendChild(newLi);
-
-        // getting object of count
-        count = document.getElementById('bellCount').getAttribute('data-count');
-        document.getElementById('bellCount').setAttribute('data-count', parseInt(count) + 1);
+        var count = parseInt(document.getElementById('bellCount').getAttribute('data-count')) || 0;
+        document.getElementById('bellCount').setAttribute('data-count', count + 1);
     }
-
-
 </script>
+{% endif %}
 {% endblock %}
