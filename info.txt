@@ -1,4 +1,4 @@
 Set-ExecutionPolicy RemoteSigned -Scope Process
 venv\scripts\activate
 cd notifi
-python manage.py startapp myapp
+python manage.py runserver
